@@ -10,6 +10,7 @@ import { ShoppingBag, Plus, Minus, X } from "lucide-react";
 const LOGO = "/logo-deli.png";
 const HERO_IMG = "/hero-dulces.png"; // imagen que gira en el banner (PNG transparente)
 const BRAND = "Deli Dulces Típicos";
+const WHATSAPP_NUMBER = "522462961183"; // 52 + tu número de 10 dígitos, sin +, espacios ni guiones
 
 /* 1 · CAPA DE DATOS (aquí se conecta Odoo) ───────────────── */
 
@@ -299,12 +300,99 @@ const Skeletons = () => (
   <>{Array.from({ length: 6 }).map((_, i) => <div key={i} className="skeleton aspect-[4/5] rounded-[2rem]" />)}</>
 );
 
-/* 7 · PÁGINA ─────────────────────────────────────────────── */
+/* 7 · PEDIDO POR WHATSAPP ────────────────────────────────── */
+
+function buildMessage(f, detail, total) {
+  const rows = detail.map((d) => `• ${d.name}: ${d.qtyLabel} × ${money(d.price)}${d.unit} = ${money(d.subtotal)}`);
+  return [
+    `¡Hola! Quiero hacer un pedido en ${BRAND} 🍬`,
+    "",
+    `Nombre: ${f.name.trim()}`,
+    "",
+    ...rows,
+    "",
+    `Total: ${money(total)}`,
+    f.delivery === "domicilio" ? `Entrega: a domicilio (${f.address.trim()})` : "Entrega: recoger en tienda",
+    `Forma de pago: ${f.pay === "transferencia" ? "transferencia" : "efectivo"}`,
+    f.notes.trim() ? `Notas: ${f.notes.trim()}` : null,
+    "",
+    f.pay === "transferencia"
+      ? "¿Me compartes los datos para hacer la transferencia?"
+      : "Quedo atento a tu confirmación.",
+  ].filter((l) => l !== null).join("\n");
+}
+
+const inputCls =
+  "w-full rounded-2xl border border-[#F2D6E8] bg-white px-4 py-3 text-base outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20";
+
+function OrderSheet({ detail, total, onClose }) {
+  const [f, setF] = useState({ name: "", delivery: "recoger", address: "", pay: "transferencia", notes: "" });
+  const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
+  const ready = f.name.trim() && (f.delivery === "recoger" || f.address.trim());
+
+  const send = () => {
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(buildMessage(f, detail, total))}`;
+    window.open(url, "_blank", "noopener");
+  };
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-[#2A1038]/50 sm:items-center" onClick={onClose}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Confirmar pedido"
+        onClick={(e) => e.stopPropagation()}
+        className="rise max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-[2rem] bg-[var(--bg)] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-[2rem]"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="display text-xl font-bold">Confirma tu pedido</h2>
+          <button onClick={onClose} aria-label="Cerrar" className="grid h-10 w-10 place-items-center rounded-full bg-white shadow-sm"><X size={18} /></button>
+        </div>
+
+        <ul className="mt-4 space-y-1.5 rounded-2xl bg-white p-4 text-sm">
+          {detail.map((d) => (
+            <li key={d.id} className="flex justify-between gap-3">
+              <span>{d.name} <span className="text-[var(--soft)]">· {d.qtyLabel}</span></span>
+              <span className="font-bold">{money(d.subtotal)}</span>
+            </li>
+          ))}
+          <li className="flex justify-between border-t border-[#F2D6E8] pt-2 text-base font-bold"><span>Total</span><span>{money(total)}</span></li>
+        </ul>
+
+        <div className="mt-4 space-y-3">
+          <input className={inputCls} placeholder="Tu nombre" value={f.name} onChange={(e) => set("name", e.target.value)} autoComplete="name" />
+          <div className="flex gap-2" role="group" aria-label="Entrega">
+            <Chip active={f.delivery === "recoger"} onClick={() => set("delivery", "recoger")}>Recoger en tienda</Chip>
+            <Chip active={f.delivery === "domicilio"} onClick={() => set("delivery", "domicilio")}>A domicilio</Chip>
+          </div>
+          {f.delivery === "domicilio" && (
+            <input className={inputCls} placeholder="Dirección de entrega" value={f.address} onChange={(e) => set("address", e.target.value)} autoComplete="street-address" />
+          )}
+          <div className="flex gap-2" role="group" aria-label="Forma de pago">
+            <Chip active={f.pay === "transferencia"} onClick={() => set("pay", "transferencia")}>Transferencia</Chip>
+            <Chip active={f.pay === "efectivo"} onClick={() => set("pay", "efectivo")}>Efectivo</Chip>
+          </div>
+          <input className={inputCls} placeholder="Notas (opcional)" value={f.notes} onChange={(e) => set("notes", e.target.value)} />
+        </div>
+
+        <Btn className="mt-5 w-full disabled:opacity-50" disabled={!ready} onClick={send}>Enviar pedido por WhatsApp</Btn>
+        <p className="mt-3 text-center text-sm text-[var(--soft)]">
+          {f.pay === "transferencia"
+            ? "Te responderemos por WhatsApp con los datos para pagar."
+            : "Pagas al recibir tu pedido."}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* 8 · PÁGINA ─────────────────────────────────────────────── */
 
 export default function Dulcenube() {
   const { items, loading, error } = useProducts();
   const [filters, setFilters] = useState({ color: null, flavor: null, kilo: false });
   const [cart, setCart] = useState({}); // { [id]: cantidad }
+  const [sheet, setSheet] = useState(false);
 
   const visible = useMemo(
     () => items.filter((p) =>
@@ -321,10 +409,21 @@ export default function Dulcenube() {
       return next ? { ...rest, [id]: next } : rest;
     });
 
-  const { total, lines } = useMemo(() => {
-    let t = 0;
-    for (const [id, q] of Object.entries(cart)) t += (items.find((p) => p.id === +id)?.price ?? 0) * q;
-    return { total: t, lines: Object.keys(cart).length };
+  const { total, lines, detail } = useMemo(() => {
+    const detail = [];
+    for (const [id, q] of Object.entries(cart)) {
+      const p = items.find((x) => x.id === +id);
+      if (!p) continue;
+      detail.push({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        unit: p.soldBy === "kilo" ? "/kg" : " c/u",
+        qtyLabel: p.soldBy === "kilo" ? `${q} kg` : `${q} pza`,
+        subtotal: p.price * q,
+      });
+    }
+    return { total: detail.reduce((a, d) => a + d.subtotal, 0), lines: detail.length, detail };
   }, [cart, items]);
 
   const goKilo = () => {
@@ -338,7 +437,7 @@ export default function Dulcenube() {
 
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
         <a href="#" className="flex items-center gap-3" aria-label={BRAND}>
-          <img src={LOGO} alt={BRAND} className="h-32 w-auto drop-shadow-[0_6px_10px_rgba(42,16,56,.18)] sm:h-40" />
+          <img src={LOGO} alt={BRAND} className="h-20 w-auto drop-shadow-[0_6px_10px_rgba(42,16,56,.18)] sm:h-24" />
         </a>
         <span className="relative grid h-11 w-11 place-items-center rounded-full bg-white shadow-sm" aria-label={`Carrito: ${lines} productos`}>
           <ShoppingBag size={20} />
@@ -372,11 +471,13 @@ export default function Dulcenube() {
         <p className="text-sm text-[var(--soft)]">{BRAND} · dulces por pieza y por kilo</p>
       </footer>
 
+      {sheet && lines > 0 && <OrderSheet detail={detail} total={total} onClose={() => setSheet(false)} />}
+
       {lines > 0 && (
         <div className="pop fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <div className="mx-auto flex max-w-md items-center justify-between rounded-full bg-[var(--brand)] py-2 pl-6 pr-2 text-white shadow-[0_18px_40px_-10px_rgba(194,24,143,.8)]">
             <span className="font-bold">{lines} {lines === 1 ? "producto" : "productos"} · {money(total)}</span>
-            <Btn className="py-2.5">Hacer pedido</Btn>
+            <Btn className="py-2.5" onClick={() => setSheet(true)}>Hacer pedido</Btn>
           </div>
         </div>
       )}
