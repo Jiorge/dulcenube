@@ -8,6 +8,7 @@ import { ShoppingBag, Plus, Minus, X } from "lucide-react";
    ─────────────────────────────────────────────────────────── */
 
 const LOGO = "/logo-deli.png";
+const HERO_IMG = "/hero-dulces.png"; // imagen que gira en el banner (PNG transparente)
 const BRAND = "Deli Dulces Típicos";
 
 /* 1 · CAPA DE DATOS (aquí se conecta Odoo) ───────────────── */
@@ -130,31 +131,7 @@ const Badge = ({ children, tone = "#FFE3F3" }) => (
   </span>
 );
 
-/* 4 · HERO: dulce que gira con el cursor ─────────────────── */
-
-function Candy() {
-  const line = { stroke: "#2A1038", strokeWidth: 5, strokeLinejoin: "round" };
-  return (
-    <svg viewBox="0 0 240 160" className="w-full drop-shadow-[0_24px_24px_rgba(194,24,143,.35)]" aria-hidden="true">
-      <defs>
-        <radialGradient id="dn-body" cx=".35" cy=".3" r=".9">
-          <stop offset="0" stopColor="#FF8AD3" />
-          <stop offset=".6" stopColor="#D61F9E" />
-          <stop offset="1" stopColor="#9A1176" />
-        </radialGradient>
-        <clipPath id="dn-clip"><ellipse cx="120" cy="80" rx="82" ry="56" /></clipPath>
-      </defs>
-      <polygon points="40,80 4,40 14,80 4,120" fill="#FFD23F" {...line} />
-      <polygon points="200,80 236,40 226,80 236,120" fill="#FFD23F" {...line} />
-      <ellipse cx="120" cy="80" rx="82" ry="56" fill="url(#dn-body)" />
-      <g clipPath="url(#dn-clip)" stroke="#FF8A2B" strokeOpacity=".9" strokeWidth="10">
-        <path d="M60 140 L110 10" /><path d="M95 150 L145 0" /><path d="M130 150 L180 0" /><path d="M165 150 L215 10" />
-      </g>
-      <ellipse cx="120" cy="80" rx="82" ry="56" fill="none" {...line} />
-      <ellipse cx="92" cy="52" rx="26" ry="10" fill="#fff" fillOpacity=".55" transform="rotate(-20 92 52)" />
-    </svg>
-  );
-}
+/* 4 · HERO: imagen que gira con el cursor ─────────────────── */
 
 function Hero({ onKilo }) {
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
@@ -214,15 +191,20 @@ function Hero({ onKilo }) {
         ))}
         <button
           onClick={() => setSpin((s) => s + 360)}
-          aria-label="Girar el dulce"
-          className="absolute inset-0 m-auto h-fit w-[72%] cursor-pointer rounded-3xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand)]"
+          aria-label="Girar la imagen"
+          className="absolute inset-0 m-auto h-fit w-[94%] cursor-pointer rounded-3xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand)]"
           style={{
             transform: `rotateY(${tilt.x * 40 + spin}deg) rotateX(${-tilt.y * 32}deg) rotateZ(${tilt.x * 10 - 6}deg)`,
             transition: "transform .6s cubic-bezier(.2,.8,.2,1)",
             transformStyle: "preserve-3d",
           }}
         >
-          <div className="float"><Candy /></div>
+          <img
+            src={HERO_IMG}
+            alt="Palanqueta en barra y tortilla de cacahuate"
+            draggable={false}
+            className="float w-full drop-shadow-[0_24px_24px_rgba(42,16,56,.28)]"
+          />
         </button>
       </div>
     </section>
@@ -356,7 +338,7 @@ export default function Dulcenube() {
 
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
         <a href="#" className="flex items-center gap-3" aria-label={BRAND}>
-          <img src={LOGO} alt={BRAND} className="h-32 w-auto drop-shadow-[0_6px_10px_rgba(42,16,56,.18)] sm:h-40" />
+          <img src={LOGO} alt={BRAND} className="h-20 w-auto drop-shadow-[0_6px_10px_rgba(42,16,56,.18)] sm:h-24" />
         </a>
         <span className="relative grid h-11 w-11 place-items-center rounded-full bg-white shadow-sm" aria-label={`Carrito: ${lines} productos`}>
           <ShoppingBag size={20} />
