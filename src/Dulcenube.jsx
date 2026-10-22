@@ -356,7 +356,7 @@ export default function Dulcenube() {
 
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
         <a href="#" className="flex items-center gap-3" aria-label={BRAND}>
-          <img src={LOGO} alt={BRAND} className="h-20 w-auto drop-shadow-[0_6px_10px_rgba(42,16,56,.18)] sm:h-24" />
+          <img src={LOGO} alt={BRAND} className="h-28 w-auto drop-shadow-[0_6px_10px_rgba(42,16,56,.18)] sm:h-36" />
         </a>
         <span className="relative grid h-11 w-11 place-items-center rounded-full bg-white shadow-sm" aria-label={`Carrito: ${lines} productos`}>
           <ShoppingBag size={20} />
@@ -386,7 +386,7 @@ export default function Dulcenube() {
       </main>
 
       <footer className="mx-auto mt-14 flex max-w-6xl flex-col items-center gap-3 px-5 text-center">
-        <img src={LOGO} alt={BRAND} className="h-40 w-auto drop-shadow-[0_8px_12px_rgba(42,16,56,.18)] sm:h-48" />
+        <img src={LOGO} alt={BRAND} className="h-48 w-auto drop-shadow-[0_8px_12px_rgba(42,16,56,.18)] sm:h-64" />
         <p className="text-sm text-[var(--soft)]">{BRAND} · dulces por pieza y por kilo</p>
       </footer>
 
