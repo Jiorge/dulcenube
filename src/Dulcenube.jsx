@@ -2,27 +2,27 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ShoppingBag, Plus, Minus, X } from "lucide-react";
 
 /* ───────────────────────────────────────────────────────────
-   Dulcenube · Landing + catálogo (mobile-first)
+   Deli Dulces Típicos · Landing + catálogo (mobile-first)
    Requiere: react, tailwindcss, lucide-react
-   Los componentes Btn / Chip / Badge siguen el patrón shadcn/ui:
-   puedes reemplazarlos por los de tu carpeta /components/ui.
+   Logo: guarda el archivo en  public/logo-deli.png
    ─────────────────────────────────────────────────────────── */
+
+const LOGO = "/logo-deli.png";
+const BRAND = "Deli Dulces Típicos";
 
 /* 1 · CAPA DE DATOS (aquí se conecta Odoo) ───────────────── */
 
-const USE_MOCK = true; // ← cámbialo a false cuando tu proxy de Odoo esté listo
-const API_URL = "/api/odoo/products";
+const USE_MOCK = true; // ← cámbialo a false cuando tu endpoint de Odoo esté listo
+const API_URL = "/api/products";
 
-/* Odoo NO debe llamarse directo desde el navegador (credenciales y CORS).
-   Crea un endpoint propio (Node, Next.js route, etc.) que haga un
-   search_read sobre product.template y devuelva JSON con estos campos:
+/* Campos esperados desde Odoo (product.template):
    id, name, list_price, uom_id, x_color, x_sabor, image_256, is_featured */
 const fromOdoo = (r) => ({
   id: r.id,
   name: r.name,
   price: r.list_price,
   soldBy: String(r.uom_id?.[1] ?? "").toLowerCase().includes("kg") ? "kilo" : "pieza",
-  color: r.x_color || "rosa", // rosa | morado | azul | verde | amarillo | rojo
+  color: r.x_color || "rosa", // rosa | naranja | amarillo | verde | azul | morado | rojo
   flavor: r.x_sabor || "dulce", // dulce | acido | picante
   image: r.image_256 ? `data:image/png;base64,${r.image_256}` : null,
   emoji: "🍬",
@@ -33,18 +33,18 @@ const MOCK = [
   { id: 1, name: "Gomitas de osito", price: 180, soldBy: "kilo", color: "rosa", flavor: "dulce", emoji: "🧸", featured: true },
   { id: 2, name: "Paleta de uva", price: 18, soldBy: "pieza", color: "morado", flavor: "dulce", emoji: "🍭" },
   { id: 3, name: "Gusanos ácidos", price: 210, soldBy: "kilo", color: "verde", flavor: "acido", emoji: "🐛" },
-  { id: 4, name: "Mango enchilado", price: 24, soldBy: "pieza", color: "amarillo", flavor: "picante", emoji: "🥭" },
+  { id: 4, name: "Mango enchilado", price: 24, soldBy: "pieza", color: "naranja", flavor: "picante", emoji: "🥭" },
   { id: 5, name: "Nubes de vainilla", price: 160, soldBy: "kilo", color: "azul", flavor: "dulce", emoji: "☁️", featured: true },
   { id: 6, name: "Caramelo de cereza", price: 6, soldBy: "pieza", color: "rojo", flavor: "acido", emoji: "🍒" },
-  { id: 7, name: "Tamarindo con chile", price: 190, soldBy: "kilo", color: "rojo", flavor: "picante", emoji: "🌶️" },
-  { id: 8, name: "Chocolate con lavanda", price: 45, soldBy: "pieza", color: "morado", flavor: "dulce", emoji: "🍫" },
-  { id: 9, name: "Algodón de azúcar azul", price: 35, soldBy: "pieza", color: "azul", flavor: "dulce", emoji: "🍥" },
+  { id: 7, name: "Tamarindo con chile", price: 190, soldBy: "kilo", color: "naranja", flavor: "picante", emoji: "🌶️" },
+  { id: 8, name: "Cocada de coco", price: 20, soldBy: "pieza", color: "amarillo", flavor: "dulce", emoji: "🥥" },
+  { id: 9, name: "Algodón de azúcar", price: 35, soldBy: "pieza", color: "rosa", flavor: "dulce", emoji: "🍥" },
   { id: 10, name: "Aros ácidos de limón", price: 200, soldBy: "kilo", color: "verde", flavor: "acido", emoji: "🍋" },
 ];
 
 async function fetchProducts(signal) {
   if (USE_MOCK) {
-    await new Promise((r) => setTimeout(r, 600)); // simula latencia
+    await new Promise((r) => setTimeout(r, 600));
     return MOCK;
   }
   const res = await fetch(API_URL, { signal });
@@ -64,15 +64,16 @@ function useProducts() {
   return state;
 }
 
-/* 2 · TOKENS ─────────────────────────────────────────────── */
+/* 2 · TOKENS (colores tomados del logo) ──────────────────── */
 
 const COLORS = {
-  rosa: { label: "Rosa", hex: "#FF6FB5", tint: "#FFE1F0" },
-  morado: { label: "Morado", hex: "#7B4FD6", tint: "#E9DEFF" },
-  azul: { label: "Azul", hex: "#7CC4FF", tint: "#DDF0FF" },
-  verde: { label: "Verde", hex: "#7ED9A0", tint: "#DEF7E8" },
-  amarillo: { label: "Amarillo", hex: "#FFD25E", tint: "#FFF3CC" },
-  rojo: { label: "Rojo", hex: "#FF6B6B", tint: "#FFE0E0" },
+  rosa: { label: "Rosa", hex: "#FF5FA8", tint: "#FFDDEC" },
+  naranja: { label: "Naranja", hex: "#FF8A2B", tint: "#FFE6CF" },
+  amarillo: { label: "Amarillo", hex: "#FFD23F", tint: "#FFF3C2" },
+  verde: { label: "Verde", hex: "#73D13D", tint: "#E1F6D3" },
+  azul: { label: "Azul", hex: "#4CC9F0", tint: "#D6F2FC" },
+  morado: { label: "Morado", hex: "#9B5DE5", tint: "#EADDFB" },
+  rojo: { label: "Rojo", hex: "#FF5A5F", tint: "#FFDFE0" },
 };
 const FLAVORS = [
   { id: "dulce", label: "Dulce" },
@@ -83,7 +84,7 @@ const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currenc
 
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Comfortaa:wght@600;700&display=swap');
-.dn{--bg:#FFF9F4;--ink:#2E1F55;--soft:#6F6490;--pink:#FF6FB5;--grape:#7B4FD6;--sky:#A9D6FF;
+.dn{--bg:#FFFBF5;--ink:#2A1038;--soft:#6B5A78;--brand:#C2188F;--orange:#FF8A2B;--green:#73D13D;--yellow:#FFD23F;--sky:#4CC9F0;
   font-family:'Quicksand',system-ui,sans-serif;background:var(--bg);color:var(--ink)}
 .dn .display{font-family:'Comfortaa','Quicksand',sans-serif;letter-spacing:-.02em}
 .dn ::-webkit-scrollbar{display:none}
@@ -94,7 +95,7 @@ const CSS = `
 .dn .float{animation:dn-float 6s ease-in-out infinite}
 .dn .pop{animation:dn-pop .35s ease-out}
 .dn .rise{animation:dn-rise .7s cubic-bezier(.2,.8,.2,1) both}
-.dn .skeleton{background:linear-gradient(90deg,#f3e9f7 25%,#fff 50%,#f3e9f7 75%);background-size:200% 100%;animation:dn-shimmer 1.4s linear infinite}
+.dn .skeleton{background:linear-gradient(90deg,#fde6f3 25%,#fff 50%,#fde6f3 75%);background-size:200% 100%;animation:dn-shimmer 1.4s linear infinite}
 @media (prefers-reduced-motion:reduce){.dn *{animation:none!important;transition:none!important}}
 `;
 
@@ -103,10 +104,10 @@ const CSS = `
 const Btn = ({ className = "", variant = "primary", ...p }) => (
   <button
     {...p}
-    className={`inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-bold transition active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--grape)] ${
+    className={`inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-bold transition active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand)] ${
       variant === "primary"
-        ? "bg-[var(--pink)] text-white shadow-[0_10px_24px_-8px_rgba(255,111,181,.7)] hover:brightness-105"
-        : "bg-white text-[var(--grape)] shadow-[0_6px_18px_-8px_rgba(123,79,214,.4)] hover:bg-[#F4EEFF]"
+        ? "bg-[var(--orange)] text-[var(--ink)] shadow-[0_10px_24px_-8px_rgba(255,138,43,.8)] hover:brightness-105"
+        : "bg-white text-[var(--brand)] shadow-[0_6px_18px_-8px_rgba(194,24,143,.45)] hover:bg-[#FFF0F8]"
     } ${className}`}
   />
 );
@@ -115,15 +116,15 @@ const Chip = ({ active, children, className = "", ...p }) => (
   <button
     {...p}
     aria-pressed={active}
-    className={`shrink-0 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--grape)] ${
-      active ? "bg-[var(--grape)] text-white shadow-md" : "bg-white text-[var(--ink)] shadow-sm hover:bg-[#F4EEFF]"
+    className={`shrink-0 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand)] ${
+      active ? "bg-[var(--brand)] text-white shadow-md" : "bg-white text-[var(--ink)] shadow-sm hover:bg-[#FFF0F8]"
     } ${className}`}
   >
     {children}
   </button>
 );
 
-const Badge = ({ children, tone = "#E9DEFF" }) => (
+const Badge = ({ children, tone = "#FFE3F3" }) => (
   <span className="rounded-full px-2.5 py-1 text-xs font-bold text-[var(--ink)]" style={{ background: tone }}>
     {children}
   </span>
@@ -132,22 +133,24 @@ const Badge = ({ children, tone = "#E9DEFF" }) => (
 /* 4 · HERO: dulce que gira con el cursor ─────────────────── */
 
 function Candy() {
+  const line = { stroke: "#2A1038", strokeWidth: 5, strokeLinejoin: "round" };
   return (
-    <svg viewBox="0 0 240 160" className="w-full drop-shadow-[0_24px_24px_rgba(123,79,214,.35)]" aria-hidden="true">
+    <svg viewBox="0 0 240 160" className="w-full drop-shadow-[0_24px_24px_rgba(194,24,143,.35)]" aria-hidden="true">
       <defs>
         <radialGradient id="dn-body" cx=".35" cy=".3" r=".9">
-          <stop offset="0" stopColor="#FFB3DA" />
-          <stop offset=".6" stopColor="#FF6FB5" />
-          <stop offset="1" stopColor="#D9449A" />
+          <stop offset="0" stopColor="#FF8AD3" />
+          <stop offset=".6" stopColor="#D61F9E" />
+          <stop offset="1" stopColor="#9A1176" />
         </radialGradient>
         <clipPath id="dn-clip"><ellipse cx="120" cy="80" rx="82" ry="56" /></clipPath>
       </defs>
-      <polygon points="40,80 2,40 12,80 2,120" fill="#A9D6FF" />
-      <polygon points="200,80 238,40 228,80 238,120" fill="#A9D6FF" />
+      <polygon points="40,80 4,40 14,80 4,120" fill="#FFD23F" {...line} />
+      <polygon points="200,80 236,40 226,80 236,120" fill="#FFD23F" {...line} />
       <ellipse cx="120" cy="80" rx="82" ry="56" fill="url(#dn-body)" />
-      <g clipPath="url(#dn-clip)" stroke="#fff" strokeOpacity=".55" strokeWidth="10">
+      <g clipPath="url(#dn-clip)" stroke="#FF8A2B" strokeOpacity=".9" strokeWidth="10">
         <path d="M60 140 L110 10" /><path d="M95 150 L145 0" /><path d="M130 150 L180 0" /><path d="M165 150 L215 10" />
       </g>
+      <ellipse cx="120" cy="80" rx="82" ry="56" fill="none" {...line} />
       <ellipse cx="92" cy="52" rx="26" ry="10" fill="#fff" fillOpacity=".55" transform="rotate(-20 92 52)" />
     </svg>
   );
@@ -163,11 +166,13 @@ function Hero({ onKilo }) {
     setTilt({ x: (e.clientX - r.left) / r.width - 0.5, y: (e.clientY - r.top) / r.height - 0.5 });
   };
 
-  const minis = [
-    { c: "#FFD25E", s: "h-10 w-10", p: "top-[8%] left-[6%]", d: "0s", k: 40 },
-    { c: "#7ED9A0", s: "h-7 w-7", p: "top-[70%] left-[10%]", d: "1.2s", k: -30 },
-    { c: "#7B4FD6", s: "h-12 w-12", p: "top-[12%] right-[8%]", d: ".6s", k: -50 },
-    { c: "#7CC4FF", s: "h-8 w-8", p: "bottom-[8%] right-[14%]", d: "1.8s", k: 30 },
+  /* Confeti como el del logo */
+  const confetti = [
+    { c: "#FFD23F", w: 44, h: 18, p: "top-[8%] left-[8%]", r: -25, d: "0s", k: 40 },
+    { c: "#4CC9F0", w: 22, h: 34, p: "top-[62%] left-[6%]", r: 20, d: "1.2s", k: -30 },
+    { c: "#73D13D", w: 40, h: 16, p: "top-[10%] right-[10%]", r: 30, d: ".6s", k: -50 },
+    { c: "#FF5FA8", w: 20, h: 38, p: "bottom-[9%] right-[12%]", r: -15, d: "1.8s", k: 30 },
+    { c: "#9B5DE5", w: 34, h: 14, p: "bottom-[14%] left-[24%]", r: 12, d: ".9s", k: -24 },
   ];
 
   return (
@@ -177,7 +182,7 @@ function Hero({ onKilo }) {
           Hoy toca algo dulce, ácido o con chile.
         </h1>
         <p className="mt-4 max-w-md text-lg text-[var(--soft)]">
-          Gomitas, chocolates y enchilados por pieza o por kilo. Eliges desde tu celular y te lo preparamos.
+          Dulces típicos por pieza o por kilo. Eliges desde tu celular y te lo preparamos.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Btn onClick={() => document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth" })}>Ver dulces</Btn>
@@ -185,20 +190,22 @@ function Hero({ onKilo }) {
         </div>
       </div>
 
-      {/* Escenario interactivo */}
       <div
         ref={ref}
         onPointerMove={move}
         onPointerLeave={() => setTilt({ x: 0, y: 0 })}
-        className="order-1 relative mx-auto aspect-square w-full max-w-md touch-pan-y select-none rounded-[3rem] bg-gradient-to-br from-[#FFE1F0] via-[#E9DEFF] to-[#DDF0FF] md:order-2"
+        className="order-1 relative mx-auto aspect-square w-full max-w-md touch-pan-y select-none rounded-[3rem] bg-gradient-to-br from-[#FFF0B8] via-[#FFD6EC] to-[#CFF1FF] md:order-2"
         style={{ perspective: 900 }}
       >
-        {minis.map((m, i) => (
+        {confetti.map((m, i) => (
           <span
             key={i}
-            className={`float absolute rounded-full shadow-lg ${m.s} ${m.p}`}
+            className={`float absolute rounded-md ${m.p}`}
             style={{
-              background: `radial-gradient(circle at 30% 30%, #fff9, ${m.c})`,
+              width: m.w,
+              height: m.h,
+              background: m.c,
+              rotate: `${m.r}deg`,
               animationDelay: m.d,
               translate: `${tilt.x * m.k}px ${tilt.y * m.k}px`,
               transition: "translate .25s ease-out",
@@ -208,7 +215,7 @@ function Hero({ onKilo }) {
         <button
           onClick={() => setSpin((s) => s + 360)}
           aria-label="Girar el dulce"
-          className="absolute inset-0 m-auto h-fit w-[72%] cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--grape)] rounded-3xl"
+          className="absolute inset-0 m-auto h-fit w-[72%] cursor-pointer rounded-3xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand)]"
           style={{
             transform: `rotateY(${tilt.x * 40 + spin}deg) rotateX(${-tilt.y * 32}deg) rotateZ(${tilt.x * 10 - 6}deg)`,
             transition: "transform .6s cubic-bezier(.2,.8,.2,1)",
@@ -243,7 +250,7 @@ function Filters({ f, set, count }) {
           {FLAVORS.map((x) => (
             <Chip key={x.id} active={f.flavor === x.id} onClick={() => toggle("flavor", x.id)}>{x.label}</Chip>
           ))}
-          <span className="mx-1 h-5 w-px shrink-0 bg-[#E4D9F7]" />
+          <span className="mx-1 h-5 w-px shrink-0 bg-[#F2D6E8]" />
           <Chip active={f.kilo} onClick={() => set({ ...f, kilo: !f.kilo })}>Dulces por kilo</Chip>
         </div>
       </div>
@@ -264,7 +271,7 @@ function ProductCard({ p, qty, onChange }) {
 
   return (
     <article
-      className={`group flex flex-col overflow-hidden rounded-[2rem] bg-white p-3 shadow-[0_14px_34px_-16px_rgba(123,79,214,.45)] transition hover:-translate-y-1 hover:shadow-[0_22px_40px_-16px_rgba(123,79,214,.55)] ${
+      className={`group flex flex-col overflow-hidden rounded-[2rem] bg-white p-3 shadow-[0_14px_34px_-16px_rgba(194,24,143,.4)] transition hover:-translate-y-1 hover:shadow-[0_22px_40px_-16px_rgba(194,24,143,.5)] ${
         p.featured ? "col-span-2 sm:flex-row sm:items-stretch" : ""
       }`}
     >
@@ -288,16 +295,16 @@ function ProductCard({ p, qty, onChange }) {
         <div className="flex items-center justify-between gap-2">
           <span className="text-lg font-bold">{money(p.price)}<span className="text-sm font-medium text-[var(--soft)]">{unit}</span></span>
           {qty > 0 ? (
-            <div key={bump} className="pop flex items-center gap-1 rounded-full bg-[#F4EEFF] p-1">
-              <button aria-label="Quitar" onClick={() => change(-1)} className="grid h-8 w-8 place-items-center rounded-full bg-white text-[var(--grape)]"><Minus size={16} /></button>
+            <div key={bump} className="pop flex items-center gap-1 rounded-full bg-[#FFF0F8] p-1">
+              <button aria-label="Quitar" onClick={() => change(-1)} className="grid h-8 w-8 place-items-center rounded-full bg-white text-[var(--brand)]"><Minus size={16} /></button>
               <span className="min-w-[3.2rem] text-center text-sm font-bold">{label}</span>
-              <button aria-label="Agregar más" onClick={() => change(1)} className="grid h-8 w-8 place-items-center rounded-full bg-[var(--pink)] text-white"><Plus size={16} /></button>
+              <button aria-label="Agregar más" onClick={() => change(1)} className="grid h-8 w-8 place-items-center rounded-full bg-[var(--orange)] text-[var(--ink)]"><Plus size={16} /></button>
             </div>
           ) : (
             <button
               aria-label={`Agregar ${p.name}`}
               onClick={() => change(1)}
-              className="grid h-11 w-11 place-items-center rounded-full bg-[var(--pink)] text-white shadow-[0_8px_18px_-6px_rgba(255,111,181,.8)] transition active:scale-90"
+              className="grid h-11 w-11 place-items-center rounded-full bg-[var(--orange)] text-[var(--ink)] shadow-[0_8px_18px_-6px_rgba(255,138,43,.85)] transition active:scale-90"
             ><Plus size={20} /></button>
           )}
         </div>
@@ -347,14 +354,13 @@ export default function Dulcenube() {
     <div className="dn min-h-screen pb-28">
       <style>{CSS}</style>
 
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-        <a href="#" className="display flex items-center gap-2 text-xl font-bold">
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--pink)] text-white">d</span>
-          Dulcenube
+      <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
+        <a href="#" className="flex items-center gap-3" aria-label={BRAND}>
+          <img src={LOGO} alt={BRAND} className="h-20 w-auto drop-shadow-[0_6px_10px_rgba(42,16,56,.18)] sm:h-24" />
         </a>
         <span className="relative grid h-11 w-11 place-items-center rounded-full bg-white shadow-sm" aria-label={`Carrito: ${lines} productos`}>
           <ShoppingBag size={20} />
-          {lines > 0 && <span key={lines} className="pop absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-[var(--grape)] px-1 text-xs font-bold text-white">{lines}</span>}
+          {lines > 0 && <span key={lines} className="pop absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-[var(--brand)] px-1 text-xs font-bold text-white">{lines}</span>}
         </span>
       </header>
 
@@ -379,10 +385,14 @@ export default function Dulcenube() {
         </div>
       </main>
 
-      {/* Barra de pedido (aparece al agregar algo) */}
+      <footer className="mx-auto mt-14 flex max-w-6xl flex-col items-center gap-3 px-5 text-center">
+        <img src={LOGO} alt={BRAND} className="h-40 w-auto drop-shadow-[0_8px_12px_rgba(42,16,56,.18)] sm:h-48" />
+        <p className="text-sm text-[var(--soft)]">{BRAND} · dulces por pieza y por kilo</p>
+      </footer>
+
       {lines > 0 && (
         <div className="pop fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <div className="mx-auto flex max-w-md items-center justify-between rounded-full bg-[var(--grape)] py-2 pl-6 pr-2 text-white shadow-[0_18px_40px_-10px_rgba(123,79,214,.8)]">
+          <div className="mx-auto flex max-w-md items-center justify-between rounded-full bg-[var(--brand)] py-2 pl-6 pr-2 text-white shadow-[0_18px_40px_-10px_rgba(194,24,143,.8)]">
             <span className="font-bold">{lines} {lines === 1 ? "producto" : "productos"} · {money(total)}</span>
             <Btn className="py-2.5">Hacer pedido</Btn>
           </div>
