@@ -338,7 +338,7 @@ export default function Dulcenube() {
 
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
         <a href="#" className="flex items-center gap-3" aria-label={BRAND}>
-          <img src={LOGO} alt={BRAND} className="h-20 w-auto drop-shadow-[0_6px_10px_rgba(42,16,56,.18)] sm:h-24" />
+          <img src={LOGO} alt={BRAND} className="h-32 w-auto drop-shadow-[0_6px_10px_rgba(42,16,56,.18)] sm:h-40" />
         </a>
         <span className="relative grid h-11 w-11 place-items-center rounded-full bg-white shadow-sm" aria-label={`Carrito: ${lines} productos`}>
           <ShoppingBag size={20} />
